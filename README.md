@@ -181,7 +181,7 @@ docker pull mwatelescope/mwa-demo:latest
 When [running the demo](#running-the-demo), you should run the commands in an interactive Docker shell.
 
 ```bash
-docker run -it --rm -v ${PWD}:${PWD} -w ${PWD} -e MWA_ASVO_API_KEY=$MWA_ASVO_API_KEY mwatelescope/mwa-demo:latest
+docker run -it --rm -v ${PWD}:${PWD} -w ${PWD} -e MWA_ASVO_API_KEY=$MWA_ASVO_API_KEY --shm-size=2gb mwatelescope/mwa-demo:latest
 ```
 
 #### Docker Troubleshooting
