@@ -4,7 +4,53 @@ on:
   push:
 
 jobs:
-  docker:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: mwatelescope/mwa-demo:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  demo_1121334536:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: mwatelescope/mwa-demo:latest
+      env:
+        obsid: 1121334536
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: download demo data
+        run: |
+          mkdir -p demo/data/1121334536/raw
+          curl -L -o demo/data/1121334536/raw/1121334536_20150719094841_gpubox20_00.fits 'https://projects.pawsey.org.au/mwa-demo/1121334536_20150719094841_gpubox20_00.fits'
+          echo 'ab0a3040c6adfc482ed1485fa080c18f  demo/data/1121334536/raw/1121334536_20150719094841_gpubox20_00.fits' > demo_data.md5sum
+      - name: self-test
+        run: demo/00_test.sh
+      - name: tap
+        run: demo/01_tap.sh
+      - name: mwalib
+        run: demo/03_mwalib.sh
+      - name: ssins
+        run: demo/04_ssins.sh
+      - name: img
+        run: demo/07_img.sh
+  push:
+    needs: build # TODO: needs: demo_1121334536
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
