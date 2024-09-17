@@ -35,23 +35,31 @@ if [[ -n "${gpus:-}" ]]; then
 fi
 
 export imgname="${outdir}/${obsid}/img/wsclean_hyp_${obsid}"
-if [ ! -f "${imgname}-image.fits" ]; then
-    wsclean \
-        -name "${imgname}" \
-        -size 2048 2048 \
-        -scale 20asec \
-        -pol i \
-        -niter 100 \
-        -gridder idg -grid-with-beam -idg-mode $idg_mode \
-        -multiscale \
-        -weight briggs 0 \
-        -mgain 0.85 -gain 0.1 \
-        -auto-threshold 1 -auto-mask 3 \
-        -make-psf \
-        -circular-beam \
-        -mwa-path "$beam_path" \
-        -temp-dir /tmp \
-        $cal_ms
-else
-    echo "${imgname}-image.fits exists, skipping wsclean"
-fi
+# if [ ! -f "${imgname}-image.fits" ]; then
+wsclean \
+    -name "${imgname}_gx2" \
+    -size 8000 8000 \
+    -j 16 \
+    -scale 15asec \
+    -pol I \
+    -nmiter 2 \
+    -niter 10000000 \
+    -multiscale \
+    -mgain 0.95 \
+    -multiscale-gain 0.15 \
+    -multiscale-scale-bias 0.6 \
+    -gridder idg -grid-with-beam -idg-mode $idg_mode \
+    -weight briggs 1 \
+    -join-channels \
+    -channels-out 4 \
+    -fit-spectral-pol 2 \
+    -mgain 0.85 -gain 0.1 \
+    -auto-threshold 1 -auto-mask 3 \
+    -make-psf \
+    -mwa-path "$beam_path" \
+    -apply-primary-beam \
+    -temp-dir /tmp \
+    $cal_ms
+# else
+#     echo "${imgname}-image.fits exists, skipping wsclean"
+# fi
