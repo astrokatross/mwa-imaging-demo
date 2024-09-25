@@ -9,19 +9,39 @@ export SCRIPT_BASE=${SCRIPT_BASE:-$(dirname $ME)}
 source "$SCRIPT_BASE/00_env.sh"
 
 export obsid=${obsid:-1341914000}
-
 # check for calibrated measurement set from previous step
-export cal_ms="${cal_ms:-${outdir}/${obsid}/cal/hyp_cal_${obsid}.ms}"
+# export cal_ms="${cal_ms:-${outdir}/${obsid}/cal/hyp_cal_${obsid}.ms}"
+for obs in ${obslist[@]}
+do
+    cal_mss+=("${outdir}/${obs}/cal/hyp_cal_${obs}.ms")
+done
+
 
 set -e
-if (($(ls -ld $cal_ms | wc -l) < 1)); then
-    echo "cal_ms=$cal_ms does not exist. trying 06_cal.sh"
-    $SCRIPT_BASE/06_cal.sh
-fi
+for cal_ms in ${cal_mss[@]}
+do
+    if (($(ls -ld $cal_ms | wc -l) < 1)); then
+        echo "cal_ms=$cal_ms does not exist. trying 06_cal.sh"
+        $SCRIPT_BASE/06_cal.sh
+    fi
+done 
 
 # ### #
 # IMG #
 # ### #
+# Should I add some option to "reset" back to initial 
+export briggs=${briggs:-0}
+export scale=${scale:-"20asec"}
+export mgain=${mgain:-0.85}
+export mscale=${mscale:-0.6}
+export size=${size:-2048}
+export gain=${gain:-0.1}
+
+export taper=${taper:-}
+export multiscale=${multiscale:-}
+
+export imname=${imname:-${obsid}}
+
 mkdir -p "${outdir}/${obsid}/img"
 
 # wsclean needs to know the directory of the beam file
@@ -34,32 +54,27 @@ if [[ -n "${gpus:-}" ]]; then
     export idg_mode="hybrid"
 fi
 
-export imgname="${outdir}/${obsid}/img/wsclean_hyp_${obsid}"
-# if [ ! -f "${imgname}-image.fits" ]; then
-wsclean \
-    -name "${imgname}_gx2" \
-    -size 8000 8000 \
-    -j 16 \
-    -scale 15asec \
-    -pol I \
-    -nmiter 2 \
-    -niter 10000000 \
-    -multiscale \
-    -mgain 0.95 \
-    -multiscale-gain 0.15 \
-    -multiscale-scale-bias 0.6 \
-    -gridder idg -grid-with-beam -idg-mode $idg_mode \
-    -weight briggs 1 \
-    -join-channels \
-    -channels-out 4 \
-    -fit-spectral-pol 2 \
-    -mgain 0.85 -gain 0.1 \
-    -auto-threshold 1 -auto-mask 3 \
-    -make-psf \
-    -mwa-path "$beam_path" \
-    -apply-primary-beam \
-    -temp-dir /tmp \
-    $cal_ms
-# else
-#     echo "${imgname}-image.fits exists, skipping wsclean"
-# fi
+
+export imgname="${outdir}/${obsid}/img/${imname}"
+if [ ! -f "${imgname}-image-pb.fits" ]; then
+    wsclean \
+        -name "${imgname}" \
+        -size ${size} ${size} \
+        -j 16 \
+        -scale ${scale} \
+        -pol I \
+        -nmiter 2 \
+        -niter 10000 \
+        -mgain ${mgain} \
+        -gridder idg -grid-with-beam -idg-mode $idg_mode \
+        -weight briggs ${briggs} \
+        ${multiscale} ${taper} \
+        -gain ${gain} \
+        -auto-threshold 1 -auto-mask 3 \
+        -make-psf \
+        -mwa-path "$beam_path" \
+        -temp-dir /tmp \
+        $cal_mss
+else
+    echo "${imgname}-image-pb.fits exists, skipping wsclean"
+fi
