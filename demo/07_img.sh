@@ -11,7 +11,7 @@ source "$SCRIPT_BASE/00_env.sh"
 export obsid=${obsid:-1341914000}
 # check for calibrated measurement set from previous step
 # export cal_ms="${cal_ms:-${outdir}/${obsid}/cal/hyp_cal_${obsid}.ms}"
-for obs in ${obslist[@]}
+for obs in ${obsid[@]}
 do
     cal_mss+=("${outdir}/${obs}/cal/hyp_cal_${obs}.ms")
 done
