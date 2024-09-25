@@ -40,9 +40,18 @@ export gain=${gain:-0.1}
 export taper=${taper:-}
 export multiscale=${multiscale:-}
 
-export imname=${imname:-${obsid}}
+num_obsid=${#obsid[@]}
+if [ ${num_obsid} -eq 1 ];
+then 
+    mkdir -p "${outdir}/${obsid}/img"
+    export imname=${imname:-${obsid}}
+    export imgname="${outdir}/${obsid}/img/${imname}"
+else
+    mkdir -p "${outdir}/comb_img/"
+    export imname=${imname:-"jointdeconv"}
+    export imgname="${outdir}/comb_img/${imname}"
+fi 
 
-mkdir -p "${outdir}/${obsid}/img"
 
 # wsclean needs to know the directory of the beam file
 export beam_path="${MWA_BEAM_FILE%/*}"
@@ -55,7 +64,6 @@ if [[ -n "${gpus:-}" ]]; then
 fi
 
 
-export imgname="${outdir}/${obsid}/img/${imname}"
 if [ ! -f "${imgname}-image-pb.fits" ]; then
     wsclean \
         -name "${imgname}" \
