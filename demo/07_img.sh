@@ -4,19 +4,24 @@
 # ENV #
 # ### #
 # see: 00_env.sh
+echo ${obsid[@]}
 if [ -n "$ZSH_VERSION" ]; then ME="${0:A}"; else ME=$(realpath ${BASH_SOURCE:0}); fi
 export SCRIPT_BASE=${SCRIPT_BASE:-$(dirname $ME)}
 source "$SCRIPT_BASE/00_env.sh"
+echo ${obsid[@]}
 
-export obsid=${obsid:-1341914000}
+export obsid=${obsid:-1121334536}
+echo ${obsid[@]}
 # check for calibrated measurement set from previous step
 # export cal_ms="${cal_ms:-${outdir}/${obsid}/cal/hyp_cal_${obsid}.ms}"
+cal_mss=()
 for obs in ${obsid[@]}
 do
-    cal_mss+=("${outdir}/${obs}/cal/hyp_cal_${obs}.ms")
+    echo $obs
+    cal_mss+="${outdir}/${obs}/cal/hyp_cal_${obs}.ms"
 done
 
-
+echo ${cal_mss[@]}
 set -e
 for cal_ms in ${cal_mss[@]}
 do
@@ -40,16 +45,25 @@ export gain=${gain:-0.1}
 export taper=${taper:-}
 export multiscale=${multiscale:-}
 
+if [[ -n $multiscale ]];
+then 
+    multiscale="-multiscale -multiscale-scale-bias=${mscale}"
+fi 
+
+
+
 num_obsid=${#obsid[@]}
 if [ ${num_obsid} -eq 1 ];
 then 
+    echo "Only one obsid"
     mkdir -p "${outdir}/${obsid}/img"
     export imname=${imname:-${obsid}}
     export imgname="${outdir}/${obsid}/img/${imname}"
 else
+    echo "Multiple mss"
     mkdir -p "${outdir}/comb_img/"
     export imname=${imname:-"jointdeconv"}
-    export imgname="${outdir}/comb_img/${imname}"
+    export imgname="${outdir}/combined/img/${imname}"
 fi 
 
 
