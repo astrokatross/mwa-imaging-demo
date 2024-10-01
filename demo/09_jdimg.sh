@@ -8,20 +8,24 @@ if [ -n "$ZSH_VERSION" ]; then ME="${0:A}"; else ME=$(realpath ${BASH_SOURCE:0})
 export SCRIPT_BASE=${SCRIPT_BASE:-$(dirname $ME)}
 source "$SCRIPT_BASE/00_env.sh"
 
-export obsid=${obsid:-1121334536}
-# check for calibrated measurement set from previous step
-export cal_ms="${cal_ms:-${outdir}/${obsid}/cal/hyp_cal_${obsid}.ms}"
+export obslist={obslist:-"1121334536 1303134032 1341914000"}
+
+cal_mss=()
+for obs in ${obslist[@]}
+do
+    echo $obs
+    cal_mss+="${outdir}/${obs}/cal/hyp_cal_${obs}.ms"
+done
 
 set -e
+for cal_ms in ${cal_mss[@]}
+do
+    if (($(ls -ld $cal_ms | wc -l) < 1)); then
+        echo "cal_ms=$cal_ms does not exist. trying 06_cal.sh"
+        $SCRIPT_BASE/06_cal.sh
+    fi
+done 
 
-if (($(ls -ld $cal_ms | wc -l) < 1)); then
-    echo "cal_ms=$cal_ms does not exist. trying 06_cal.sh"
-    $SCRIPT_BASE/06_cal.sh
-fi
-
-# ### #
-# IMG #
-# ### #
 export briggs=${briggs:-0}
 export scale=${scale:-"20asec"}
 export mgain=${mgain:-0.85}
@@ -41,10 +45,9 @@ then
     multiscale="-multiscale -multiscale-scale-bias=${mscale}"
 fi 
 
-mkdir -p "${outdir}/${obsid}/img"
-export imname=${imname:-${obsid}}
-export imgname="${outdir}/${obsid}/img/${imname}"
-
+mkdir -p "${outdir}/comb_img/"
+export imname=${imname:-"jointdeconv"}
+export imgname="${outdir}/combined/img/${imname}"
 
 # wsclean needs to know the directory of the beam file
 export beam_path="${MWA_BEAM_FILE%/*}"
@@ -79,3 +82,5 @@ if [ ! -f "${imgname}-image-pb.fits" ]; then
 else
     echo "${imgname}-image-pb.fits exists, skipping wsclean"
 fi
+
+
