@@ -30,7 +30,7 @@ export size=${size:-2048}
 export gain=${gain:-0.1}
 
 cores=$(nproc --all)
-export cpus=${cpus:-cores}
+export cpus=${cpus:-$cores}
 
 
 export taper=${taper:-}
@@ -40,6 +40,9 @@ if [[ -n $multiscale ]];
 then 
     multiscale="-multiscale -multiscale-scale-bias=${mscale}"
 fi 
+
+
+
 
 mkdir -p "${outdir}/${obsid}/img"
 export imname=${imname:-${obsid}}
@@ -75,7 +78,7 @@ if [ ! -f "${imgname}-image-pb.fits" ]; then
         -make-psf \
         -mwa-path "$beam_path" \
         -temp-dir /tmp \
-        $cal_mss
+        $cal_ms
 else
     echo "${imgname}-image-pb.fits exists, skipping wsclean"
 fi
